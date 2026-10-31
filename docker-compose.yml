@@ -1,0 +1,57 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: taskflow
+      POSTGRES_PASSWORD: taskflow
+      POSTGRES_DB: taskflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Files here run automatically the first time the volume is created.
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskflow -d taskflow"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  task-service:
+    build:
+      context: .
+      args:
+        SERVICE: task-service
+    environment:
+      DATABASE_URL: postgres://taskflow:taskflow@db:5432/taskflow?sslmode=disable
+      PORT: "8081"
+    expose:
+      - "8081"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  gateway:
+    build:
+      context: .
+      args:
+        SERVICE: api
+    environment:
+      TASK_SERVICE_URL: http://task-service:8081
+      PORT: "8080"
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+    depends_on:
+      task-service:
+        condition: service_started
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      gateway:
+        condition: service_started
+
+volumes:
+  pgdata:
