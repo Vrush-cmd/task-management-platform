@@ -223,3 +223,13 @@ tests swap in a fake.
   instead of a driver error.
 - **Migrations are plain SQL.** Compose runs them on first start; there is no
   migration tool to learn or maintain for a single table.
+
+
+## Demo
+
+https://github.com/user-attachments/assets/ba2d40fe-fab9-4352-b81e-d3ff421952f7
+
+
+
+
+
